@@ -7,16 +7,9 @@ User = get_user_model()
 
 class Group(models.Model):
     title = models.CharField('title', max_length=200)
-    slug = models.SlugField(
-        max_length=255,
-        unique=True,
-        blank=True,
-        allow_unicode=True
-    )
-    description = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return f'{self.title} {self.description}'
+        return f'{self.title}'
 
 
 class Post(models.Model):

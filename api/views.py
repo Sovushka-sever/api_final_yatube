@@ -1,21 +1,23 @@
-from rest_framework import viewsets
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.generics import get_object_or_404
+from rest_framework import viewsets, filters
+from rest_framework.generics import get_object_or_404, ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from .permissions import IsOwnerOrReadOnly
-from .models import Post, Comment
-from .serializers import PostSerializer, CommentSerializer
+from .models import Post, Comment, Group, Follow, User
+from .serializers import PostSerializer, CommentSerializer, GroupSerializer, FollowSerializer
 
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [
-        IsAuthenticated,
         IsAuthenticatedOrReadOnly,
         IsOwnerOrReadOnly,
     ]
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ('group',)
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -24,7 +26,7 @@ class PostViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [
         IsAuthenticated,
         IsAuthenticatedOrReadOnly,
@@ -42,3 +44,33 @@ class CommentViewSet(viewsets.ModelViewSet):
             post_id=self.kwargs.get("id")
         )
 
+
+class GroupView(ListCreateAPIView):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = (
+        IsAuthenticatedOrReadOnly,
+    )
+
+    def perform_create(self, serializer):
+        serializer.save(title=self.request.data['title'])
+
+
+class FollowView(ListCreateAPIView):
+    queryset = Follow.objects.all()
+    serializer_class = FollowSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = (
+        IsAuthenticatedOrReadOnly,
+    )
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('=user__username', '=following__username')
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        following = get_object_or_404(
+            User,
+            username=self.request.POST.get('following')
+        )
+        serializer.save(user=user, following=following)
