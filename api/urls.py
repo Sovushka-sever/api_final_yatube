@@ -13,13 +13,13 @@ router_v1.register(r'posts/(?P<id>\d+)/comments',
                    basename='comment')
 
 urlpatterns = [
-    path('token/',
+    path('v1/token/',
          TokenObtainPairView.as_view(),
          name='token_obtain_pair'),
-    path('token/refresh/',
+    path('v1/token/refresh/',
          TokenRefreshView.as_view(),
          name='token_refresh'),
-    path('group/', views.GroupView.as_view(), name='group'),
-    path('follow/', views.FollowView.as_view(), name='follow'),
-    path('', include(router_v1.urls))
+    path('v1/group/', views.GroupView.as_view(), name='group'),
+    path('v1/follow/', views.FollowView.as_view(), name='follow'),
+    path('v1/', include(router_v1.urls))
 ]
